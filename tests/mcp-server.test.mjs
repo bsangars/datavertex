@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { unlinkSync } from 'node:fs';
+import { join } from 'node:path';
 import { test } from 'node:test';
+
+const dbPath = join(process.cwd(), 'data', 'vertex.db');
 
 function startServer() {
   const child = spawn(process.execPath, ['server/mcp-server.mjs'], { cwd: process.cwd(), stdio: ['pipe', 'pipe', 'pipe'] });
@@ -32,7 +36,8 @@ function waitFor(messages, id) {
   });
 }
 
-test('the MCP server lists tools and returns structured Workday data', async () => {
+test('the MCP server lists tools and returns SQLite-backed Workday data', async () => {
+  try { unlinkSync(dbPath); } catch {}
   const { child, messages } = startServer();
   try {
     child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} })}\n`);
@@ -41,13 +46,21 @@ test('the MCP server lists tools and returns structured Workday data', async () 
 
     child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} })}\n`);
     const list = await waitFor(messages, 2);
-    assert.equal(list.result.tools.length, 6);
+    assert.equal(list.result.tools.length, 8);
     assert.equal(list.result.tools[0].name, 'workday.search_workers');
 
     child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'workday.get_onboarding_status', arguments: {} } })}\n`);
-    const call = await waitFor(messages, 3);
-    assert.equal(call.result.structuredContent.follow_up_needed, 5);
-    assert.equal(call.result.isError, false);
+    const onboarding = await waitFor(messages, 3);
+    assert.equal(onboarding.result.structuredContent.starters, 12);
+    assert.equal(onboarding.result.structuredContent.follow_up_needed, 5);
+    assert.ok(onboarding.result.structuredContent.pending_tasks >= 5);
+    assert.equal(onboarding.result.isError, false);
+
+    child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'sales.get_pipeline_summary', arguments: {} } })}\n`);
+    const pipeline = await waitFor(messages, 4);
+    assert.ok(pipeline.result.structuredContent.pipeline_value > 0);
+    assert.ok(pipeline.result.structuredContent.open_deals >= 5);
+    assert.equal(pipeline.result.isError, false);
   } finally {
     child.kill();
   }

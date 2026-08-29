@@ -1,7 +1,20 @@
+import {
+  getMetricDefinition,
+  getOnboardingStatus,
+  getPipelineSummary,
+  queryMetric,
+  searchArticles,
+  searchDocuments,
+  searchOpportunities,
+  searchWorkers,
+  summarizeResult
+} from '../data/live-queries.js';
+
 const matches = {
   workday: /workday|employee|people|starter|start|hire|onboard|hr|headcount|manager|pto|leave/,
+  sales: /sales|pipeline|opportunity|opportunities|deal|deals|crm|quota|forecast|revenue|account|accounts|win rate|closing/,
   documents: /document|file|onboard|policy|contract|handbook|need|missing/,
-  data: /cost|revenue|data|rdbms|database|metric|fulfillment|inventory|west|increase|month|trend/,
+  data: /cost|data|rdbms|database|metric|fulfillment|inventory|west|increase|month|trend/,
   knowledge: /article|policy|hybrid|procedure|guideline|how do|what is/
 };
 
@@ -15,62 +28,64 @@ function dateWindow(now = new Date()) {
   return { start: formatDate(now), end: formatDate(end) };
 }
 
-export function makePlan(question, now) {
+function addStep(plan, name, args, now) {
+  const result = summarizeResult(name, runQuery(name, args, now));
+  plan.push({ name, args, result });
+}
+
+function runQuery(name, args, now) {
+  switch (name) {
+    case 'workday.search_workers': return searchWorkers(args, now);
+    case 'workday.get_onboarding_status': return getOnboardingStatus(args, now);
+    case 'sales.search_opportunities': return searchOpportunities(args, now);
+    case 'sales.get_pipeline_summary': return getPipelineSummary(args, now);
+    case 'documents.search': return searchDocuments(args, now);
+    case 'warehouse.query_readonly': return queryMetric(args, now);
+    case 'warehouse.get_metric_definition': return getMetricDefinition(args);
+    case 'knowledge.search_articles': return searchArticles(args, now);
+    default: return {};
+  }
+}
+
+export function makePlan(question, now = new Date()) {
   const query = question.toLowerCase();
   const window = dateWindow(now);
   const plan = [];
   const usesWorkday = matches.workday.test(query);
+  const usesSales = matches.sales.test(query);
 
   if (usesWorkday) {
-    plan.push({
-      name: 'workday.search_workers',
-      args: { query: 'new starters', start_after: window.start, start_before: window.end },
-      result: '12 approved worker records found with starts in the next 30 days.'
-    });
+    addStep(plan, 'workday.search_workers', { query: 'new starters', start_after: window.start, start_before: window.end }, now);
     if (/onboard|document|need|missing/.test(query)) {
-      plan.push({
-        name: 'workday.get_onboarding_status',
-        args: { start_after: window.start, start_before: window.end },
-        result: '8 onboarding tasks are pending across 5 new starters.'
-      });
+      addStep(plan, 'workday.get_onboarding_status', { start_after: window.start, start_before: window.end }, now);
+    }
+  }
+
+  if (usesSales) {
+    const region = /west/.test(query) ? 'West' : /east/.test(query) ? 'East' : undefined;
+    const stage = /negotiation/.test(query) ? 'Negotiation' : /proposal/.test(query) ? 'Proposal' : undefined;
+    const searchQuery = /account|deal|opportunity|owner|closing/.test(query) ? question : '';
+    addStep(plan, 'sales.search_opportunities', { query: searchQuery, region, stage, close_before: window.end }, now);
+    if (/pipeline|forecast|quota|win rate|summary|total/.test(query)) {
+      addStep(plan, 'sales.get_pipeline_summary', { period: 'current quarter' }, now);
     }
   }
 
   if (matches.documents.test(query)) {
-    plan.push({
-      name: 'documents.search',
-      args: { query: usesWorkday ? 'new starter onboarding required documents' : question },
-      result: usesWorkday ? '4 document templates and 3 incomplete packets matched.' : '7 relevant approved documents matched.'
-    });
+    addStep(plan, 'documents.search', { query: usesWorkday ? 'new starter onboarding required documents' : question }, now);
   }
 
   if (matches.data.test(query)) {
-    plan.push({
-      name: 'warehouse.query_readonly',
-      args: { metric: 'fulfillment_cost', dimensions: ['region'], period: 'current month' },
-      result: 'West fulfillment cost is $18.42/order, 8.2% above plan.'
-    });
-    plan.push({
-      name: 'warehouse.get_metric_definition',
-      args: { metric: 'fulfillment_cost' },
-      result: 'Certified metric definition retrieved from Finance Metrics v3.'
-    });
+    addStep(plan, 'warehouse.query_readonly', { metric: 'fulfillment_cost', dimensions: ['region'], period: 'current month' }, now);
+    addStep(plan, 'warehouse.get_metric_definition', { metric: 'fulfillment_cost' }, now);
   }
 
-  if (matches.knowledge.test(query)) {
-    plan.push({
-      name: 'knowledge.search_articles',
-      args: { query: question, audience: 'managers' },
-      result: 'Hybrid Work Policy v4.2 is the current approved article.'
-    });
+  if (matches.knowledge.test(query) && !usesWorkday && !usesSales && !matches.data.test(query)) {
+    addStep(plan, 'knowledge.search_articles', { query: question, audience: 'managers' }, now);
   }
 
   if (!plan.length) {
-    plan.push({
-      name: 'knowledge.search_articles',
-      args: { query: question, audience: 'all employees' },
-      result: 'Relevant company knowledge sources found.'
-    });
+    addStep(plan, 'knowledge.search_articles', { query: question, audience: 'all employees' }, now);
   }
 
   return plan.filter((step, index, all) => all.findIndex(item => item.name === step.name) === index);

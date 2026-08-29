@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#080d1b" />
-    <title>Vertex Agent — MCP workspace</title>
+    <title>Agent Workspace — MCP workspace</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,43 +13,39 @@
   <body>
     <div class="app-shell">
       <aside class="sidebar">
-        <a class="brand" href="#workspace" aria-label="Vertex Agent home"><span class="brand-mark">✦</span><span>vertex<span>agent</span></span><i class="beta">BETA</i></a>
+        <a class="brand" href="#workspace" aria-label="Agent workspace home"><span class="brand-mark">✦</span><span>agent<span>workspace</span></span><i class="beta">BETA</i></a>
         <p class="side-label">WORKSPACE</p>
-        <button class="workspace-switcher" type="button"><span class="workspace-avatar">N</span><span>Northstar Operations</span><span class="chevron">⌄</span></button>
+        <button class="workspace-switcher" type="button"><span class="workspace-avatar">A</span><span>Default workspace</span><span class="chevron">⌄</span></button>
         <nav class="main-nav" aria-label="Workspace navigation">
           <a class="nav-link active" href="#workspace" data-view="workspace"><span>✦</span> Agent workspace</a>
-          <a class="nav-link" href="#catalog" data-view="catalog"><span>⌘</span> Tool catalog <b>6</b></a>
+          <a class="nav-link" href="#catalog" data-view="catalog"><span>⌘</span> Tool catalog <b id="tool-count-badge">0</b></a>
           <a class="nav-link" href="#runs" data-view="runs"><span>◫</span> Run history</a>
+          <a class="nav-link" href="#settings" data-view="settings"><span>⚙</span> Settings</a>
           <a class="nav-link" href="#policies" data-view="policies"><span>◇</span> Access policies</a>
         </nav>
         <section class="connected-servers" aria-labelledby="server-list-label">
           <p class="side-label" id="server-list-label">CONNECTED MCP SERVERS</p>
-          <div class="server"><span class="server-icon workday">W</span><span><strong>Workday</strong><small>HRIS · 2 tools</small></span><i class="live-dot" title="Connected"></i></div>
-          <div class="server"><span class="server-icon docs">▤</span><span><strong>Documents</strong><small>Files · 1 tool</small></span><i class="live-dot" title="Connected"></i></div>
-          <div class="server"><span class="server-icon data">⌁</span><span><strong>Data Warehouse</strong><small>RDBMS · 2 tools</small></span><i class="live-dot" title="Connected"></i></div>
-          <div class="server"><span class="server-icon knowledge">✣</span><span><strong>Knowledge</strong><small>Articles · 1 tool</small></span><i class="live-dot" title="Connected"></i></div>
+          <div id="server-list"></div>
         </section>
-        <div class="side-bottom"><p><span class="live-dot"></span> All tool servers healthy</p><button class="profile" type="button"><span class="profile-avatar">BK</span><span><strong>Bhargav Kumar</strong><small>Admin · unrestricted demo</small></span><span>···</span></button></div>
+        <div class="side-bottom"><p><span class="live-dot"></span> Tool servers managed by the agent API</p><button class="profile" type="button"><span class="profile-avatar">U</span><span><strong>Workspace user</strong><small>Operator</small></span><span>···</span></button></div>
       </aside>
       <main class="main-content">
-        <header class="topbar"><div><p class="eyebrow" id="section-eyebrow">AGENT WORKSPACE</p><h1 id="page-title">Ask across your work.</h1></div><div class="topbar-actions"><span class="gateway-status"><i class="live-dot"></i> MCP gateway online</span><button class="icon-button" type="button" aria-label="Notifications">♧<i></i></button><button class="icon-button" type="button" aria-label="Help">?</button></div></header>
+        <header class="topbar"><div><p class="eyebrow" id="section-eyebrow">AGENT WORKSPACE</p><h1 id="page-title">Ask across your connected tools.</h1></div><div class="topbar-actions"><span class="gateway-status" id="gateway-status"><i class="live-dot"></i> API starting</span><button class="icon-button" type="button" aria-label="Help">?</button></div></header>
         <section class="view-panel active" id="workspace-view">
-          <section class="agent-hero"><div class="hero-copy"><span class="agent-orb">✦</span><div><p class="eyebrow">VERTEX ORCHESTRATOR</p><h2>One question. The right tools.</h2><p>Vertex plans work across your approved MCP servers, presents the evidence it used, and turns the answer into a shareable GIF briefing.</p></div></div><div class="guardrail"><span>◇</span><p><strong>Read-only by default</strong><br />Actions that change data require approval.</p></div></section>
+          <section class="agent-hero"><div class="hero-copy"><span class="agent-orb">✦</span><div><p class="eyebrow">ORCHESTRATOR</p><h2>One question. The right tools.</h2><p>The agent plans work across your approved MCP servers, shows the evidence it used, and turns the answer into a shareable briefing.</p></div></div><div class="guardrail"><span>◇</span><p><strong>Read-only by default</strong><br />Actions that change data require approval.</p></div></section>
           <section class="agent-layout">
             <section class="conversation panel" aria-label="Agent conversation">
-              <div class="conversation-header"><div><span class="run-indicator"></span><strong id="run-label">Ready for a question</strong><small id="run-subtitle">6 approved tools are available to this agent</small></div><button class="clear-run" id="clear-run" type="button">Clear run</button></div>
-              <div class="conversation-body" id="conversation-body">
-                <article class="welcome-message"><span class="agent-orb small">✦</span><div><strong>What would you like to know?</strong><p>I can search Workday, documents, your data warehouse, and knowledge articles—then show you exactly what I used.</p></div></article>
-                <div class="prompt-ideas"><button type="button" data-prompt="Who is starting in the next 30 days, and what onboarding documents do they still need?">New starters and missing onboarding documents</button><button type="button" data-prompt="Why did West region fulfillment cost increase this month?">Why did West-region fulfillment cost rise?</button><button type="button" data-prompt="What is our current hybrid-work policy for managers?">Find the hybrid-work policy</button></div>
-              </div>
-              <form class="question-form" id="question-form"><label class="sr-only" for="question-input">Ask Vertex Agent</label><textarea id="question-input" rows="1" placeholder="Ask about people, documents, operations, data, or company knowledge…"></textarea><div class="composer-footer"><span>↵ to run · Shift + Enter for a new line</span><button type="submit" id="run-button">Run agent <span>↗</span></button></div></form>
+              <div class="conversation-header"><div><span class="run-indicator"></span><strong id="run-label">Ready for a question</strong><small id="run-subtitle">Loading tools…</small></div><button class="clear-run" id="clear-run" type="button">Clear run</button></div>
+              <div class="conversation-body" id="conversation-body"></div>
+              <form class="question-form" id="question-form"><label class="sr-only" for="question-input">Ask the agent</label><textarea id="question-input" rows="1" placeholder="Ask a question across your connected tools…"></textarea><div class="composer-footer"><span>↵ to run · Shift + Enter for a new line</span><button type="submit" id="run-button">Run agent <span>↗</span></button></div></form>
             </section>
             <aside class="trace panel" aria-label="Tool trace"><div class="trace-header"><div><p class="panel-label">RUN TRACE</p><h2>Tool activity</h2></div><span class="trace-state" id="trace-state">IDLE</span></div><div class="trace-empty" id="trace-empty"><span>⌘</span><p>Your agent’s plan and tool calls appear here.</p><small>Every answer shows its evidence trail.</small></div><ol class="trace-list" id="trace-list"></ol><div class="trace-policy" id="trace-policy"><span>◇</span><p><strong>Protected workspace</strong><br />Only approved, read-only tools can run automatically.</p></div></aside>
           </section>
         </section>
-        <section class="view-panel" id="catalog-view"><section class="page-heading"><div><p class="eyebrow">MCP TOOL REGISTRY</p><h2>Approved tools</h2><p>Tools are deterministic, scoped to their system, and visible to the user before an agent runs them.</p></div><span class="gateway-status"><i class="live-dot"></i> 4 servers connected</span></section><div class="tool-grid" id="tool-grid"></div></section>
-        <section class="view-panel" id="runs-view"><section class="page-heading"><div><p class="eyebrow">AUDITABLE HISTORY</p><h2>Recent agent runs</h2><p>Demo runs are held in this browser session only.</p></div></section><section class="panel history-panel"><div class="history-header"><span>Question</span><span>Tools used</span><span>Output</span><span>Time</span></div><div id="history-list"><p class="history-empty">No runs yet. Ask your first question in the Agent workspace.</p></div></section></section>
-        <section class="view-panel" id="policies-view"><section class="page-heading"><div><p class="eyebrow">SAFETY LAYER</p><h2>Access policies</h2><p>These production boundaries keep the agent useful without giving it ambient authority.</p></div></section><section class="policy-grid"><article class="policy-card panel"><span>01</span><h3>Scoped access</h3><p>Tools are exposed only after identity, tenant, and role checks. Workday fields should be filtered before the model sees them.</p></article><article class="policy-card panel"><span>02</span><h3>Read first</h3><p>Queries and search are automatically allowed. Any write, export, or external action must pause for clear approval.</p></article><article class="policy-card panel"><span>03</span><h3>Evidence trail</h3><p>Every answer keeps its plan, tool arguments, source references, and result summary for review.</p></article></section></section>
+        <section class="view-panel" id="catalog-view"><section class="page-heading"><div><p class="eyebrow">MCP TOOL REGISTRY</p><h2>Approved tools</h2><p>Tools are deterministic, scoped to their system, and visible to the user before an agent runs them.</p></div><span class="gateway-status" id="catalog-server-count"><i class="live-dot"></i> 0 servers connected</span></section><div class="tool-grid" id="tool-grid"></div></section>
+        <section class="view-panel" id="runs-view"><section class="page-heading"><div><p class="eyebrow">AUDITABLE HISTORY</p><h2>Recent agent runs</h2><p>Runs are held in this browser session only.</p></div></section><section class="panel history-panel"><div class="history-header"><span>Question</span><span>Tools used</span><span>Mode</span><span>Time</span></div><div id="history-list"><p class="history-empty">No runs yet. Ask your first question in the Agent workspace.</p></div></section></section>
+        <section class="view-panel" id="settings-view"><section class="page-heading"><div><p class="eyebrow">SETTINGS</p><h2>Model and API settings</h2><p>Configure OpenAI for tool planning and answer synthesis. Keys saved here stay in your browser unless you set a server environment variable.</p></div></section><div id="settings-host"></div></section>
+        <section class="view-panel" id="policies-view"><section class="page-heading"><div><p class="eyebrow">SAFETY LAYER</p><h2>Access policies</h2><p>These production boundaries keep the agent useful without giving it ambient authority.</p></div></section><section class="policy-grid" id="policy-grid"></section></section>
       </main>
     </div>
     <div class="toast" id="toast" role="status"></div>

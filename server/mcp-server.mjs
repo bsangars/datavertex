@@ -1,6 +1,5 @@
-#!/usr/bin/env node
 import { tools } from './tools/catalog.mjs';
-import { mockResults } from './tools/mock-results.mjs';
+import { runTool } from './tools/handlers.mjs';
 
 const protocolVersion = '2026-07-28';
 let buffer = '';
@@ -20,8 +19,8 @@ function handle(request) {
     reply(request.id, {
       protocolVersion,
       capabilities: { tools: { listChanged: false } },
-      serverInfo: { name: 'vertex-agent-demo', version: '0.1.0' },
-      instructions: 'Demo server exposes non-sensitive, read-only sample data only.'
+      serverInfo: { name: 'vertex-agent-demo', version: '0.2.0' },
+      instructions: 'Demo server exposes non-sensitive, read-only data from a local SQLite database.'
     });
     return;
   }
@@ -33,11 +32,12 @@ function handle(request) {
 
   if (request.method === 'tools/call') {
     const toolName = request.params?.name;
-    if (!mockResults[toolName]) {
+    const args = request.params?.arguments || {};
+    const result = runTool(toolName, args);
+    if (!result) {
       error(request.id, -32602, `Unknown tool: ${toolName}`);
       return;
     }
-    const result = mockResults[toolName];
     reply(request.id, {
       content: [{ type: 'text', text: JSON.stringify(result) }],
       structuredContent: result,

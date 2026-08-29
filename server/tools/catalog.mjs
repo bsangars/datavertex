@@ -16,6 +16,26 @@ export const tools = [
     inputSchema: { type: 'object', properties: { start_after: { type: 'string' }, start_before: { type: 'string' } } }
   },
   {
+    name: 'sales.search_opportunities',
+    title: 'Search opportunities',
+    description: 'Search open sales opportunities by account, owner, stage, or region.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string' },
+        stage: { type: 'string' },
+        region: { type: 'string' },
+        close_before: { type: 'string' }
+      }
+    }
+  },
+  {
+    name: 'sales.get_pipeline_summary',
+    title: 'Get pipeline summary',
+    description: 'Return open pipeline value, stage mix, and recent win rate.',
+    inputSchema: { type: 'object', properties: { period: { type: 'string' } } }
+  },
+  {
     name: 'documents.search',
     title: 'Search documents',
     description: 'Search approved document sources and return citations.',

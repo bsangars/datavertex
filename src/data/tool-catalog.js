@@ -16,6 +16,22 @@ export const toolCatalog = [
     schema: '{ start_after?, start_before? }'
   },
   {
+    name: 'sales.search_opportunities',
+    server: 'Sales CRM',
+    icon: 'S',
+    tone: 'sales',
+    description: 'Search open opportunities by account, owner, stage, region, or close-date window.',
+    schema: '{ query?, stage?, region?, close_before? }'
+  },
+  {
+    name: 'sales.get_pipeline_summary',
+    server: 'Sales CRM',
+    icon: 'S',
+    tone: 'sales',
+    description: 'Return open pipeline value, stage distribution, and recent win rate.',
+    schema: '{ period? }'
+  },
+  {
     name: 'documents.search',
     server: 'Documents',
     icon: '▤',

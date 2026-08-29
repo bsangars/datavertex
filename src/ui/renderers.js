@@ -20,10 +20,10 @@ export function renderTrace(plan, { traceList, traceEmpty, tracePolicy }) {
 }
 
 export function renderAnswer(answer, toolCount) {
-  const metrics = answer.metrics.map(([number, label]) => `
+  const metrics = (answer.metrics || []).map(([number, label]) => `
     <span class="answer-metric"><strong>${escapeHTML(number)}</strong><small>${escapeHTML(label)}</small></span>
   `).join('');
-  const sources = answer.sources.map(source => `<span>${escapeHTML(source)}</span>`).join('');
+  const sources = (answer.sources || []).map(source => `<span>${escapeHTML(source)}</span>`).join('');
   return `
     <article class="answer">
       <span class="agent-orb small">✦</span>
@@ -43,7 +43,7 @@ export function renderHistory(runs, host) {
     <article class="history-row">
       <strong>${escapeHTML(run.question)}</strong>
       <span class="history-tools">${run.plan.map(step => `<span>${escapeHTML(step.name.split('.')[0])}</span>`).join('')}</span>
-      <span class="gif-ready">GIF READY</span>
+      <span class="gif-ready">${escapeHTML(run.mode || 'ready').toUpperCase()}</span>
       <time>${run.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
     </article>
   `).join('') : '<p class="history-empty">No runs yet. Ask your first question in the Agent workspace.</p>';
@@ -59,13 +59,60 @@ export function renderToolCatalog(catalog, host) {
   `).join('');
 }
 
-export function welcomeMarkup() {
-  return `
-    <article class="welcome-message"><span class="agent-orb small">✦</span><div><strong>What would you like to know?</strong><p>I can search Workday, documents, your data warehouse, and knowledge articles—then show you exactly what I used.</p></div></article>
-    <div class="prompt-ideas">
-      <button type="button" data-prompt="Who is starting in the next 30 days, and what onboarding documents do they still need?">New starters and missing onboarding documents</button>
-      <button type="button" data-prompt="Why did West region fulfillment cost increase this month?">Why did West-region fulfillment cost rise?</button>
-      <button type="button" data-prompt="What is our current hybrid-work policy for managers?">Find the hybrid-work policy</button>
+export function renderServers(servers, host) {
+  host.innerHTML = servers.map(server => `
+    <div class="server">
+      <span class="server-icon ${server.tone}">${server.icon}</span>
+      <span><strong>${escapeHTML(server.name)}</strong><small>${escapeHTML(server.label)} · ${server.tools.length} tool${server.tools.length === 1 ? '' : 's'}</small></span>
+      <i class="live-dot" title="Connected"></i>
     </div>
+  `).join('');
+}
+
+export function renderPolicies(policies, host) {
+  host.innerHTML = policies.map(policy => `
+    <article class="policy-card panel">
+      <span>${escapeHTML(policy.id)}</span>
+      <h3>${escapeHTML(policy.title)}</h3>
+      <p>${escapeHTML(policy.body)}</p>
+    </article>
+  `).join('');
+}
+
+export function welcomeMarkup(config) {
+  const prompts = (config.samplePrompts || []).map(item => `
+    <button type="button" data-prompt="${escapeHTML(item.prompt)}">${escapeHTML(item.label)}</button>
+  `).join('');
+  return `
+    <article class="welcome-message"><span class="agent-orb small">✦</span><div><strong>${escapeHTML(config.welcome.title)}</strong><p>${escapeHTML(config.welcome.body)}</p></div></article>
+    <div class="prompt-ideas">${prompts}</div>
+  `;
+}
+
+export function renderSettingsForm(settings, { serverOpenAIConfigured, serverModel }) {
+  return `
+    <section class="settings-panel panel">
+      <form id="settings-form" class="settings-form">
+        <label>
+          <span>OpenAI API key</span>
+          <input id="settings-api-key" type="password" name="apiKey" value="${escapeHTML(settings.apiKey)}" placeholder="sk-..." autocomplete="off" />
+          <small>Use your own key for browser sessions, or set <code>OPENAI_API_KEY</code> on the server for deployment.</small>
+        </label>
+        <label>
+          <span>Model</span>
+          <input id="settings-model" type="text" name="model" value="${escapeHTML(settings.model)}" placeholder="gpt-4o-mini" />
+          <small>Server default: ${escapeHTML(serverModel || 'gpt-4o-mini')}${serverOpenAIConfigured ? ' · server key configured' : ''}</small>
+        </label>
+        <label class="settings-checkbox">
+          <input id="settings-use-openai" type="checkbox" name="useOpenAI" ${settings.useOpenAI ? 'checked' : ''} />
+          <span>Use OpenAI to plan tools and synthesize answers</span>
+        </label>
+        <div class="settings-actions">
+          <button type="submit" class="settings-save">Save settings</button>
+          <button type="button" class="settings-test" id="settings-test">Test connection</button>
+        </div>
+        <p class="settings-status" id="settings-status"></p>
+      </form>
+    </section>
   `;
 }
