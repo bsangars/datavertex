@@ -1,7 +1,6 @@
 import { fetchCatalog, fetchHealth, runAgent } from './api/client.js';
 import { defaultWorkspace } from './config/workspace.js';
 import { loadSettings, maskApiKey, saveSettings } from './data/settings.js';
-import { downloadGif } from './ui/gif-exporter.js';
 import {
   escapeHTML,
   renderAnswer,
@@ -192,11 +191,6 @@ async function runQuestion(question) {
 
     document.getElementById('thinking')?.remove();
     elements.conversation.insertAdjacentHTML('beforeend', renderAnswer(answer, plan.length, plan));
-    const gifButton = [...elements.conversation.querySelectorAll('[data-gif-button]')].at(-1);
-    gifButton.addEventListener('click', () => {
-      downloadGif(answer);
-      notify('Animated GIF briefing generated.');
-    });
     elements.conversation.scrollTop = elements.conversation.scrollHeight;
     elements.traceState.textContent = 'COMPLETE';
     elements.traceState.className = 'trace-state complete';

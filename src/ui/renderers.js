@@ -33,7 +33,7 @@ export function renderAnswer(answer, toolCount, plan = []) {
         <p>${escapeHTML(answer.body)}</p>
         <div class="answer-metrics">${metrics}</div>
         ${renderPipelineResults(plan)}
-        <div class="answer-footer"><div class="evidence">${sources}</div><button class="gif-button" type="button" data-gif-button>▸ Generate GIF briefing</button></div>
+        <div class="answer-footer"><div class="evidence">${sources}</div></div>
       </div>
     </article>
   `;
