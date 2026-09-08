@@ -37,7 +37,7 @@ const elements = {
 };
 
 const viewMeta = {
-  workspace: ['Ask across your connected tools.', 'AGENT WORKSPACE'],
+  workspace: ['Your company’s collective mind.', 'AGENT WORKSPACE'],
   catalog: ['Tool catalog', 'MCP TOOL REGISTRY'],
   runs: ['Run history', 'AUDITABLE HISTORY'],
   policies: ['Access policies', 'SAFETY LAYER'],
