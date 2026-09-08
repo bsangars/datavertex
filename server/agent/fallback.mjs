@@ -33,6 +33,13 @@ export function makeFallbackPlan(question, now = new Date()) {
   const query = question.toLowerCase();
   const window = dateWindow(now);
   const steps = [];
+  const operationalPipelines = /pipeline/.test(query) && (/run|schedule|status|company|planning|\bhr\b|etl|job/.test(query) || /pipeline summary and closing deals/.test(query) || !/quarter|\bq[1-4]\b|opportunit|deal|forecast|revenue|value|quota/.test(query));
+  if (operationalPipelines) {
+    const requested = [['Sales', /\bsales\b/], ['HR', /\bhr\b/], ['Planning', /\bplanning\b/]].filter(([, pattern]) => pattern.test(query));
+    const department = requested.length === 1 && !/all|company/.test(query) ? requested[0][0] : undefined;
+    addStep(steps, 'operations.get_pipeline_runs', { department }, now);
+    return steps;
+  }
   const usesWorkday = matches.workday.test(query);
   const usesSales = matches.sales.test(query);
 
@@ -49,7 +56,15 @@ export function makeFallbackPlan(question, now = new Date()) {
     }
   }
 
-  if (usesSales) {
+  if (usesSales && /quarter|\bq[1-4]\b/.test(query)) {
+    const explicit = query.match(/\bq([1-4])\b/);
+    const explicitYear = query.match(/\b(20\d{2}|2100)\b/);
+    let year = explicitYear ? Number(explicitYear[1]) : now.getUTCFullYear();
+    let quarter = explicit ? Number(explicit[1]) : Math.floor(now.getUTCMonth() / 3) + 1;
+    if (!explicit && /last|previous/.test(query)) { quarter--; if (quarter === 0) { quarter = 4; year--; } }
+    if (!explicit && /next/.test(query)) { quarter++; if (quarter === 5) { quarter = 1; year++; } }
+    addStep(steps, 'sales.get_quarterly_sales', { year, quarter }, now);
+  } else if (usesSales) {
     const region = /west/.test(query) ? 'West' : /east/.test(query) ? 'East' : undefined;
     const stage = /negotiation/.test(query) ? 'Negotiation' : /proposal/.test(query) ? 'Proposal' : undefined;
     const searchQuery = /account|deal|opportunity|owner|closing/.test(query) ? question : '';
@@ -63,7 +78,7 @@ export function makeFallbackPlan(question, now = new Date()) {
     addStep(steps, 'documents.search', { query: usesWorkday ? 'new starter onboarding required documents' : question }, now);
   }
 
-  if (matches.data.test(query)) {
+  if (matches.data.test(query) && !usesSales) {
     addStep(steps, 'warehouse.query_readonly', { metric: 'fulfillment_cost', dimensions: ['region'], period: 'current month' }, now);
     addStep(steps, 'warehouse.get_metric_definition', { metric: 'fulfillment_cost' }, now);
   }
@@ -82,6 +97,25 @@ export function makeFallbackPlan(question, now = new Date()) {
 export function makeFallbackAnswer(question, plan) {
   const query = question.toLowerCase();
   const sources = [...new Set(plan.map(step => step.name.split('.')[0]))];
+
+  const jobs = plan.find(step => step.name === 'operations.get_pipeline_runs')?.structuredResult;
+  if (jobs) return {
+    title: `${jobs.count} company data pipelines`,
+    body: `${jobs.departments.Sales} Sales, ${jobs.departments.HR} HR, and ${jobs.departments.Planning} Planning pipelines. Latest runs: ${jobs.statuses.Succeeded} succeeded, ${jobs.statuses.Failed} failed, ${jobs.statuses.Running} running. ${jobs.note}`,
+    metrics: [[String(jobs.statuses.Succeeded), 'succeeded'], [String(jobs.statuses.Failed), 'failed'], [String(jobs.statuses.Running), 'running at snapshot']],
+    sources: ['operations'], gifTitle: 'Company pipeline runs', gifStat: `${jobs.count} pipelines, ${jobs.statuses.Failed} failed`
+  };
+  const quarterly = plan.find(step => step.name === 'sales.get_quarterly_sales')?.structuredResult;
+  if (quarterly) {
+    const money = value => '$' + Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 });
+    const list = rows => rows.length ? rows.map(row => `${row.name} (${row.account}): ${money(row.amount)}, ${row.stage}, close date ${row.close_date}`).join('; ') : 'None';
+    return {
+      title: `${quarterly.period}: ${money(quarterly.closed_won.value)} won; ${money(quarterly.open_pipeline.value)} open`,
+      body: `Closed-won deals (${quarterly.closed_won.count}): ${list(quarterly.closed_won.deals)}. Open deals (${quarterly.open_pipeline.count}): ${list(quarterly.open_pipeline.deals)}. Probability-weighted open pipeline: ${money(quarterly.open_pipeline.weighted_value)}; this is an estimate, not booked sales. Closed-lost exclusions: ${quarterly.closed_lost.count} deals totaling ${money(quarterly.closed_lost.value)}. Synthetic SQLite data, USD, calendar-quarter close dates; won deal value is not recognized revenue.`,
+      metrics: [[money(quarterly.closed_won.value), 'closed-won sales'], [money(quarterly.open_pipeline.value), 'open pipeline'], [money(quarterly.open_pipeline.weighted_value), 'weighted open estimate']],
+      sources: ['sales'], gifTitle: `${quarterly.period} sales`, gifStat: `${money(quarterly.closed_won.value)} won`
+    };
+  }
 
   if (/employee|employees|worker|workers|staff|roster|headcount|people list|employee list|who are/.test(query)) {
     const workers = plan.find(step => step.name === 'workday.search_workers')?.structuredResult;

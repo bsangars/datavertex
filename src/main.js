@@ -76,7 +76,7 @@ function bindPromptButtons() {
 function applyWorkspaceConfig(config) {
   state.config = config;
   document.title = `${config.brand.name} — MCP workspace`;
-  document.querySelector('.brand span:nth-child(2)').innerHTML = `${escapeHTML(config.brand.name.split(' ')[0].toLowerCase())}<span>${escapeHTML(config.brand.name.split(' ').slice(1).join(' ').toLowerCase() || 'workspace')}</span>`;
+  document.querySelector('.brand span:nth-child(2)').innerHTML = `${escapeHTML(config.brand.name.split(' ')[0])} <span>${escapeHTML(config.brand.name.split(' ').slice(1).join(' ') || 'workspace')}</span>`;
   document.querySelector('.workspace-switcher span:nth-child(2)').textContent = config.workspace.name;
   document.querySelector('.workspace-avatar').textContent = config.workspace.avatar;
   document.querySelector('.profile strong').textContent = config.user.name;
@@ -191,7 +191,7 @@ async function runQuestion(question) {
     }
 
     document.getElementById('thinking')?.remove();
-    elements.conversation.insertAdjacentHTML('beforeend', renderAnswer(answer, plan.length));
+    elements.conversation.insertAdjacentHTML('beforeend', renderAnswer(answer, plan.length, plan));
     const gifButton = [...elements.conversation.querySelectorAll('[data-gif-button]')].at(-1);
     gifButton.addEventListener('click', () => {
       downloadGif(answer);

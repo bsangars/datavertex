@@ -1,5 +1,5 @@
 export const defaultWorkspace = {
-  brand: { name: 'Agent Workspace', mark: '✦', beta: true },
+  brand: { name: 'Data Vertex', mark: '✦', beta: true },
   workspace: { name: 'Default workspace', avatar: 'A' },
   user: { name: 'Workspace user', role: 'Operator', avatar: 'U' },
   hero: {

@@ -1,4 +1,6 @@
 import {
+  getPipelineRuns,
+  getQuarterlySales,
   getMetricDefinition,
   getOnboardingStatus,
   getPipelineSummary,
@@ -10,6 +12,8 @@ import {
 } from '../db/index.mjs';
 
 export const toolHandlers = {
+  'operations.get_pipeline_runs': args => getPipelineRuns(args),
+  'sales.get_quarterly_sales': args => getQuarterlySales(args),
   'workday.search_workers': args => searchWorkers(args),
   'workday.get_onboarding_status': args => getOnboardingStatus(args),
   'sales.search_opportunities': args => searchOpportunities(args),

@@ -1,5 +1,17 @@
 export const tools = [
   {
+    name: 'operations.get_pipeline_runs', title: 'Company pipeline runs',
+    description: 'Read synthetic SQLite operational data pipelines across Sales, HR and Planning: schedules, owners, latest status, runtime, next scheduled run, error details and three recent runs per pipeline. Use for company pipeline summary or job monitoring, not sales opportunity value.',
+    inputSchema: { type: 'object', additionalProperties: false, properties: { department: { type: 'string', enum: ['Sales', 'HR', 'Planning'] } } }
+  },
+  {
+    name: 'sales.get_quarterly_sales', title: 'Quarterly sales — won and open deals',
+    description: 'Read the SQLite sales database for a calendar quarter. Separately returns closed-won booked sales, open pipeline, probability-weighted open pipeline, closed-lost exclusions, and individual deals. Defaults to the current calendar quarter. Data is synthetic.',
+    inputSchema: { type: 'object', additionalProperties: false, properties: {
+      year: { type: 'integer', minimum: 2000, maximum: 2100 }, quarter: { type: 'integer', minimum: 1, maximum: 4 }
+    } }
+  },
+  {
     name: 'workday.search_workers',
     title: 'Search workers',
     description: 'Find approved, non-sensitive worker records by an allowed query.',

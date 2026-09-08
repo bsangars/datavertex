@@ -7,6 +7,10 @@ export function summarizeResult(name, result) {
     }
     case 'workday.get_onboarding_status':
       return `${result.pending_tasks} onboarding tasks are pending across ${result.follow_up_needed} new starters.`;
+    case 'operations.get_pipeline_runs':
+      return `${result.count} pipelines: ${result.departments.Sales} Sales, ${result.departments.HR} HR, ${result.departments.Planning} Planning. Latest: ${result.statuses.Succeeded} succeeded, ${result.statuses.Failed} failed, ${result.statuses.Running} running. Synthetic SQLite snapshot.`;
+    case 'sales.get_quarterly_sales':
+      return `${result.period}: $${result.closed_won.value.toLocaleString()} closed-won (${result.closed_won.count} deals), $${result.open_pipeline.value.toLocaleString()} open (${result.open_pipeline.count} deals), $${result.open_pipeline.weighted_value.toLocaleString()} weighted open estimate. Synthetic SQLite data.`;
     case 'sales.search_opportunities':
       return `${result.count} open opportunities matched in the pipeline.`;
     case 'sales.get_pipeline_summary':

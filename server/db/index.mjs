@@ -3,9 +3,11 @@ import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildSeed } from '../../data/seed.js';
+import { quarterlySales } from '../../data/quarterly-sales.mjs';
+import { buildPipelineSample } from '../../data/pipeline-sample.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
-const dbPath = join(root, 'data', 'vertex.db');
+const dbPath = process.env.VERTEX_DB_PATH || join(root, 'data', 'vertex.db');
 
 let database;
 
@@ -16,6 +18,13 @@ function getDatabase() {
   database.exec('PRAGMA foreign_keys = ON;');
   initializeSchema(database);
   seedIfEmpty(database);
+  const insertSample = database.prepare('INSERT OR IGNORE INTO opportunities (id, account_id, name, stage, amount, close_date, owner, probability) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+  database.exec('BEGIN');
+  try {
+    quarterlySales.forEach(row => insertSample.run(row.id, row.account_id, row.name, row.stage, row.amount, row.close_date, row.owner, row.probability));
+    database.exec('COMMIT');
+  } catch (error) { database.exec('ROLLBACK'); throw error; }
+  seedPipelineSamples(database);
   return database;
 }
 
@@ -351,4 +360,60 @@ export function resetDatabaseForTests() {
     database.close();
     database = undefined;
   }
+}
+
+export function getQuarterlySales({ year = new Date().getUTCFullYear(), quarter = Math.floor(new Date().getUTCMonth() / 3) + 1 } = {}) {
+  if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(quarter) || quarter < 1 || quarter > 4) {
+    throw new Error('Provide a year from 2000 to 2100 and a quarter from 1 to 4.');
+  }
+  const start = new Date(Date.UTC(year, (quarter - 1) * 3, 1)).toISOString().slice(0, 10);
+  const endExclusive = new Date(Date.UTC(year, quarter * 3, 1)).toISOString().slice(0, 10);
+  const records = getDatabase().prepare(`SELECT o.id, o.name, a.name AS account, o.stage, o.amount, o.close_date, o.probability, o.owner
+    FROM opportunities o JOIN accounts a ON a.id = o.account_id
+    WHERE o.close_date >= ? AND o.close_date < ? ORDER BY o.close_date, o.id`).all(start, endExclusive);
+  const sum = rows => Math.round(rows.reduce((total, row) => total + row.amount, 0) * 100) / 100;
+  const won = records.filter(row => row.stage === 'Closed Won');
+  const lost = records.filter(row => row.stage === 'Closed Lost');
+  const open = records.filter(row => !['Closed Won', 'Closed Lost'].includes(row.stage));
+  return { period: `Q${quarter} ${year}`, start, end_exclusive: endExclusive, currency: 'USD',
+    closed_won: { count: won.length, value: sum(won), deals: won },
+    open_pipeline: { count: open.length, value: sum(open), weighted_value: Math.round(open.reduce((total, row) => total + row.amount * row.probability / 100, 0) * 100) / 100, deals: open },
+    closed_lost: { count: lost.length, value: sum(lost), deals: lost },
+    note: 'Synthetic SQLite data. Calendar quarter based on close date. Closed-won deal value is booked sales, not recognized revenue. Open pipeline is not booked sales; weighted pipeline is an estimate, not a guarantee. Closed-lost deals are excluded from sales and pipeline.' };
+}
+
+function seedPipelineSamples(db) {
+  db.exec(`CREATE TABLE IF NOT EXISTS pipelines (
+    id TEXT PRIMARY KEY, department TEXT NOT NULL, name TEXT NOT NULL, owner TEXT NOT NULL,
+    schedule TEXT NOT NULL, timezone TEXT NOT NULL, next_run_at TEXT NOT NULL, snapshot_at TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS pipeline_runs (
+    id TEXT PRIMARY KEY, pipeline_id TEXT NOT NULL REFERENCES pipelines(id), started_at TEXT NOT NULL,
+    finished_at TEXT, duration_seconds INTEGER NOT NULL, status TEXT NOT NULL,
+    rows_processed INTEGER NOT NULL, error TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_pipeline_runs_pipeline_started ON pipeline_runs(pipeline_id, started_at DESC);`);
+  const insertPipeline = db.prepare('INSERT OR IGNORE INTO pipelines VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+  const insertRun = db.prepare('INSERT INTO pipeline_runs VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+  db.exec('BEGIN');
+  try {
+    for (const job of buildPipelineSample()) {
+      const inserted = insertPipeline.run(job.id, job.department, job.name, job.owner, job.schedule, job.timezone, job.next_run_at, job.snapshot_at);
+      if (inserted.changes) job.runs.forEach(run => insertRun.run(run.id, job.id, run.started_at, run.finished_at, run.duration_seconds, run.status, run.rows_processed, run.error));
+    }
+    db.exec('COMMIT');
+  } catch (error) { db.exec('ROLLBACK'); throw error; }
+}
+
+export function getPipelineRuns({ department } = {}) {
+  if (department !== undefined && !['Sales', 'HR', 'Planning'].includes(department)) throw new Error('Department must be Sales, HR, or Planning.');
+  const db = getDatabase();
+  const pipelines = (department ? db.prepare('SELECT * FROM pipelines WHERE department = ? ORDER BY name').all(department) : db.prepare("SELECT * FROM pipelines ORDER BY CASE department WHEN 'Sales' THEN 1 WHEN 'HR' THEN 2 ELSE 3 END, name").all()).map(job => {
+    const runs = db.prepare('SELECT * FROM pipeline_runs WHERE pipeline_id = ? ORDER BY started_at DESC LIMIT 3').all(job.id);
+    return { ...job, latest_run: runs[0] || null, recent_runs: runs };
+  });
+  const departments = Object.fromEntries(['Sales', 'HR', 'Planning'].map(name => [name, pipelines.filter(job => job.department === name).length]));
+  const statuses = Object.fromEntries(['Succeeded', 'Failed', 'Running'].map(status => [status, pipelines.filter(job => job.latest_run?.status === status).length]));
+  return { count: pipelines.length, departments, statuses, pipelines,
+    note: 'Synthetic SQLite snapshot, not live monitoring. All times UTC. Running durations are elapsed as of the snapshot. Next runs are scheduled times at the snapshot; no jobs are executed by this demo.' };
 }

@@ -1,6 +1,7 @@
 import { tools } from './tools/catalog.mjs';
 
 const SERVER_META = {
+  operations: { label: 'Pipeline runs', icon: '↻', tone: 'data' },
   workday: { label: 'HRIS', icon: 'W', tone: 'workday' },
   sales: { label: 'CRM', icon: 'S', tone: 'sales' },
   documents: { label: 'Files', icon: '▤', tone: 'docs' },
@@ -60,7 +61,7 @@ export function buildWorkspaceConfig() {
   const catalog = buildToolCatalog();
   const servers = buildServerGroups(catalog);
   return {
-    brand: { name: 'Agent Workspace', mark: '✦', beta: true },
+    brand: { name: 'Data Vertex', mark: '✦', beta: true },
     workspace: { name: 'Default workspace', avatar: 'A' },
     user: { name: 'Workspace user', role: 'Operator', avatar: 'U' },
     hero: {
@@ -73,8 +74,9 @@ export function buildWorkspaceConfig() {
       body: 'Ask a question and the agent will pick the right read-only tools, run them, and synthesize a sourced answer.'
     },
     samplePrompts: [
+      { label: 'Quarterly sales — closed and open deals', prompt: 'What are our sales for this quarter? Show closed-won sales and open deals separately, including weighted pipeline.' },
       { label: 'People starting soon and onboarding gaps', prompt: 'Who is starting in the next 30 days, and what onboarding documents do they still need?' },
-      { label: 'Pipeline summary and closing deals', prompt: 'What is our sales pipeline summary and which deals are closing this month?' },
+      { label: 'Company pipelines — schedules and status', prompt: 'List all company data pipelines across Sales, HR and Planning with schedules, runtimes, latest status and recent runs.' },
       { label: 'Regional cost variance', prompt: 'Why did West region fulfillment cost increase this month?' },
       { label: 'Current workplace policy', prompt: 'What is our current hybrid-work policy for managers?' }
     ],

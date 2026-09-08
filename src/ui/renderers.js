@@ -19,7 +19,7 @@ export function renderTrace(plan, { traceList, traceEmpty, tracePolicy }) {
   `).join('');
 }
 
-export function renderAnswer(answer, toolCount) {
+export function renderAnswer(answer, toolCount, plan = []) {
   const metrics = (answer.metrics || []).map(([number, label]) => `
     <span class="answer-metric"><strong>${escapeHTML(number)}</strong><small>${escapeHTML(label)}</small></span>
   `).join('');
@@ -32,6 +32,7 @@ export function renderAnswer(answer, toolCount) {
         <h3>${escapeHTML(answer.title)}</h3>
         <p>${escapeHTML(answer.body)}</p>
         <div class="answer-metrics">${metrics}</div>
+        ${renderPipelineResults(plan)}
         <div class="answer-footer"><div class="evidence">${sources}</div><button class="gif-button" type="button" data-gif-button>▸ Generate GIF briefing</button></div>
       </div>
     </article>
@@ -115,4 +116,18 @@ export function renderSettingsForm(settings, { serverOpenAIConfigured, serverMod
       </form>
     </section>
   `;
+}
+
+function renderPipelineResults(plan) {
+  const result = plan.find(step => step.name === 'operations.get_pipeline_runs')?.structuredResult;
+  if (!result) return '';
+  const stamp = value => value ? new Date(value).toLocaleString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : 'In progress';
+  const duration = run => `${Math.floor(run.duration_seconds / 60)}m ${run.duration_seconds % 60}s${run.status === 'Running' ? ' elapsed' : ''}`;
+  const status = run => `<span class="pipeline-status ${['Succeeded', 'Failed', 'Running'].includes(run.status) ? run.status.toLowerCase() : ''}">${escapeHTML(run.status)}</span>`;
+  const rows = result.pipelines.map(job => {
+    const run = job.latest_run;
+    return `<tr><th scope="row">${escapeHTML(job.name)}<small>${escapeHTML(job.owner)}</small></th><td>${escapeHTML(job.department)}</td><td>${escapeHTML(job.schedule)}</td><td>${run ? escapeHTML(stamp(run.started_at)) : 'No runs'}</td><td>${run ? escapeHTML(duration(run)) : '—'}</td><td>${run ? status(run) : 'No runs'}</td><td>${escapeHTML(stamp(job.next_run_at))}</td></tr>`;
+  }).join('');
+  const history = result.pipelines.map(job => `<details class="pipeline-history"><summary>${escapeHTML(job.name)} — ${job.recent_runs.length} recent runs</summary>${job.recent_runs.map(run => `<p>${status(run)} · Started ${escapeHTML(stamp(run.started_at))} UTC · ${escapeHTML(duration(run))} · Finished ${escapeHTML(stamp(run.finished_at))} · ${escapeHTML(run.rows_processed.toLocaleString())} rows${run.error ? `<br>${escapeHTML(run.error)}` : ''}</p>`).join('')}</details>`).join('');
+  return `<section class="pipeline-results" aria-label="Company pipeline run results"><p>Sample snapshot · All times UTC · ${escapeHTML(stamp(result.pipelines[0]?.snapshot_at))}</p><div class="pipeline-table-scroll" tabindex="0" role="region" aria-label="Pipeline schedules and latest runs"><table class="pipeline-table"><caption>Schedules and latest runs</caption><thead><tr><th>Pipeline / owner</th><th>Department</th><th>Schedule</th><th>Last started (UTC)</th><th>Runtime</th><th>Status</th><th>Next scheduled (UTC)</th></tr></thead><tbody>${rows}</tbody></table></div>${history}</section>`;
 }
