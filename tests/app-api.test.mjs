@@ -33,7 +33,7 @@ test('the app API plans, runs tools, and returns an answer', async () => {
   try {
     await waitForServer();
     const catalog = await fetch(`http://127.0.0.1:${port}/api/catalog`).then(response => response.json());
-    assert.equal(catalog.toolCount, 10);
+    assert.equal(catalog.toolCount, 11);
     assert.ok(catalog.servers.length >= 5);
 
     const output = await fetch(`http://127.0.0.1:${port}/api/agent/run`, {

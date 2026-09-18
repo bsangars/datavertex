@@ -19,11 +19,19 @@ export function renderTrace(plan, { traceList, traceEmpty, tracePolicy }) {
   `).join('');
 }
 
-export function renderAnswer(answer, toolCount, plan = []) {
+export function renderAnswer(answer, toolCount, plan = [], followUps = []) {
   const metrics = (answer.metrics || []).map(([number, label]) => `
     <span class="answer-metric"><strong>${escapeHTML(number)}</strong><small>${escapeHTML(label)}</small></span>
   `).join('');
   const sources = (answer.sources || []).map(source => `<span>${escapeHTML(source)}</span>`).join('');
+  const followUpMarkup = followUps.length ? `
+    <div class="follow-ups" aria-label="Suggested follow-up questions">
+      <span class="follow-ups-label">Try a follow-up</span>
+      <div class="follow-ups-list">
+        ${followUps.map(question => `<button type="button" class="follow-up-chip" data-prompt="${escapeHTML(question)}" data-autosubmit="true"><span aria-hidden="true">↳</span>${escapeHTML(question)}</button>`).join('')}
+      </div>
+    </div>
+  ` : '';
   return `
     <article class="answer">
       <span class="agent-orb small">✦</span>
@@ -33,6 +41,7 @@ export function renderAnswer(answer, toolCount, plan = []) {
         <p>${escapeHTML(answer.body)}</p>
         <div class="answer-metrics">${metrics}</div>
         ${renderPipelineResults(plan)}
+        ${followUpMarkup}
         <div class="answer-footer"><div class="evidence">${sources}</div></div>
       </div>
     </article>

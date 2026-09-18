@@ -67,16 +67,23 @@ export function buildSeed(now = new Date()) {
   const metrics = [
     { metric: 'fulfillment_cost', region: 'West', value: 18.42, plan_value: 17.02, period: 'current month', expedited_orders: 17 },
     { metric: 'fulfillment_cost', region: 'East', value: 15.88, plan_value: 16.10, period: 'current month', expedited_orders: 9 },
-    { metric: 'fulfillment_cost', region: 'Central', value: 16.55, plan_value: 16.40, period: 'current month', expedited_orders: 6 }
+    { metric: 'fulfillment_cost', region: 'Central', value: 16.55, plan_value: 16.40, period: 'current month', expedited_orders: 6 },
+    { metric: 'fulfillment_cost', region: 'South', value: 17.20, plan_value: 16.80, period: 'current month', expedited_orders: 8 },
+    { metric: 'fulfillment_cost', region: 'West', value: 17.65, plan_value: 17.02, period: 'last month', expedited_orders: 12 },
+    { metric: 'fulfillment_cost', region: 'East', value: 15.72, plan_value: 16.10, period: 'last month', expedited_orders: 7 },
+    { metric: 'fulfillment_cost', region: 'Central', value: 16.30, plan_value: 16.40, period: 'last month', expedited_orders: 5 },
+    { metric: 'fulfillment_cost', region: 'South', value: 16.95, plan_value: 16.80, period: 'last month', expedited_orders: 6 },
+    { metric: 'fulfillment_cost', region: 'West', value: 17.10, plan_value: 17.02, period: 'two months ago', expedited_orders: 8 },
+    { metric: 'fulfillment_cost', region: 'East', value: 15.55, plan_value: 16.10, period: 'two months ago', expedited_orders: 6 },
+    { metric: 'fulfillment_cost', region: 'Central', value: 16.20, plan_value: 16.40, period: 'two months ago', expedited_orders: 5 },
+    { metric: 'fulfillment_cost', region: 'South', value: 16.80, plan_value: 16.80, period: 'two months ago', expedited_orders: 4 }
   ];
 
   const articles = [
-    {
-      title: 'Hybrid Work Policy',
-      version: '4.2',
-      status: 'published',
-      excerpt: 'Managers may approve up to three remote days per week when role requirements permit.'
-    }
+    { title: 'Hybrid Work Policy', version: '4.2', status: 'published', excerpt: 'Managers may approve up to three remote days per week when role requirements permit.', owner: 'People Operations', approved_at: '2026-06-01', audience: 'managers' },
+    { title: 'Hybrid Work Policy — Prior Version', version: '4.1', status: 'archived', excerpt: 'Previous version allowed up to two remote days per week; superseded by v4.2.', owner: 'People Operations', approved_at: '2025-11-14', audience: 'managers' },
+    { title: 'Hybrid Work Policy — Team Lead Exceptions', version: '1.0', status: 'published', excerpt: 'Team leads with on-call coverage duties may request additional remote days with VP approval and coverage plans.', owner: 'People Operations', approved_at: '2026-06-01', audience: 'managers' },
+    { title: 'Remote Work Standards', version: '2.3', status: 'published', excerpt: 'Guidance on equipment, network security, and workstation setup for remote work days.', owner: 'IT', approved_at: '2026-04-10', audience: 'all employees' }
   ];
 
   return { workers, onboardingTasks, accounts, opportunities, documents, metrics, articles };

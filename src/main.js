@@ -65,11 +65,23 @@ function openView(view) {
 
 function bindPromptButtons() {
   document.querySelectorAll('[data-prompt]').forEach(button => {
+    if (button.dataset.bound === 'true') return;
+    button.dataset.bound = 'true';
     button.addEventListener('click', () => {
       elements.input.value = button.dataset.prompt;
       elements.input.focus();
+      if (button.dataset.autosubmit === 'true') {
+        document.getElementById('question-form').requestSubmit();
+      }
     });
   });
+}
+
+function pickFollowUps(plan = []) {
+  const map = state.config.followUpsByTool || {};
+  const suggestions = new Set();
+  plan.forEach(step => (map[step.name] || []).forEach(question => suggestions.add(question)));
+  return [...suggestions].slice(0, 3);
 }
 
 function applyWorkspaceConfig(config) {
@@ -81,9 +93,11 @@ function applyWorkspaceConfig(config) {
   document.querySelector('.profile strong').textContent = config.user.name;
   document.querySelector('.profile small').textContent = config.user.role;
   document.querySelector('.profile-avatar').textContent = config.user.avatar;
-  document.querySelector('.hero-copy .eyebrow').textContent = config.hero.eyebrow;
-  document.querySelector('.hero-copy h2').textContent = config.hero.title;
-  document.querySelector('.hero-copy p').textContent = config.hero.body;
+  document.querySelector('.hero-text .eyebrow').textContent = config.hero.eyebrow;
+  const heroStatTools = document.getElementById('hero-stat-tools');
+  const heroStatServers = document.getElementById('hero-stat-servers');
+  if (heroStatTools) heroStatTools.textContent = String(config.toolCount ?? 0);
+  if (heroStatServers) heroStatServers.textContent = String(config.serverCount ?? 0);
   elements.toolCountBadge.textContent = String(config.toolCount);
   elements.catalogServerCount.textContent = `${config.serverCount} servers connected`;
   renderToolCatalog(config.tools, elements.toolGrid);
@@ -190,7 +204,9 @@ async function runQuestion(question) {
     }
 
     document.getElementById('thinking')?.remove();
-    elements.conversation.insertAdjacentHTML('beforeend', renderAnswer(answer, plan.length, plan));
+    const followUps = pickFollowUps(plan);
+    elements.conversation.insertAdjacentHTML('beforeend', renderAnswer(answer, plan.length, plan, followUps));
+    bindPromptButtons();
     elements.conversation.scrollTop = elements.conversation.scrollHeight;
     elements.traceState.textContent = 'COMPLETE';
     elements.traceState.className = 'trace-state complete';

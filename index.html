@@ -32,7 +32,36 @@
       <main class="main-content">
         <header class="topbar"><div><p class="eyebrow" id="section-eyebrow">AGENT WORKSPACE</p><h1 id="page-title">Your company’s collective mind.</h1></div><div class="topbar-actions"><span class="gateway-status" id="gateway-status"><i class="live-dot"></i> API starting</span><button class="icon-button" type="button" aria-label="Help">?</button></div></header>
         <section class="view-panel active" id="workspace-view">
-          <section class="agent-hero"><div class="hero-copy"><span class="agent-orb">✦</span><div><p class="eyebrow">ORCHESTRATOR</p><h2>One question. The right tools.</h2><p>The agent plans work across your approved MCP servers, shows the evidence it used, and turns the answer into a shareable briefing.</p></div></div><div class="guardrail"><span>◇</span><p><strong>Read-only by default</strong><br />Actions that change data require approval.</p></div></section>
+          <section class="agent-hero">
+            <div class="hero-copy">
+              <span class="agent-orb" aria-hidden="true">✦</span>
+              <div class="hero-text">
+                <p class="eyebrow">MCP AGENT WORKSPACE</p>
+                <h2 class="hero-headline">
+                  <span class="hero-rotator" data-rotator>
+                    <em>Ask once.</em>
+                    <em>Plan, run, cite.</em>
+                    <em>Trace every tool call.</em>
+                  </span>
+                  <span class="hero-headline-tail">The agent handles the rest.</span>
+                </h2>
+                <ol class="hero-flow" aria-label="How a run flows">
+                  <li><b>01</b> Ask</li>
+                  <li aria-hidden="true">→</li>
+                  <li><b>02</b> Plan tools</li>
+                  <li aria-hidden="true">→</li>
+                  <li><b>03</b> Run read-only</li>
+                  <li aria-hidden="true">→</li>
+                  <li><b>04</b> Cite &amp; brief</li>
+                </ol>
+              </div>
+            </div>
+            <aside class="hero-stats" aria-label="Workspace at a glance">
+              <div><strong id="hero-stat-tools">0</strong><span>approved tools</span></div>
+              <div><strong id="hero-stat-servers">0</strong><span>MCP servers</span></div>
+              <div><strong>read-only</strong><span>default</span></div>
+            </aside>
+          </section>
           <section class="agent-layout">
             <section class="conversation panel" aria-label="Agent conversation">
               <div class="conversation-header"><div><span class="run-indicator"></span><strong id="run-label">Ready for a question</strong><small id="run-subtitle">Loading tools…</small></div><button class="clear-run" id="clear-run" type="button">Clear run</button></div>

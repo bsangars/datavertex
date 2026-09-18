@@ -15,6 +15,11 @@ export function summarizeResult(name, result) {
       return `${result.count} open opportunities matched in the pipeline.`;
     case 'sales.get_pipeline_summary':
       return `$${Number(result.pipeline_value).toLocaleString()} in open pipeline across ${result.open_deals} deals (${result.win_rate_pct}% win rate).`;
+    case 'sales.get_open_orders': {
+      const money = value => '$' + Number(value).toLocaleString('en-US', { maximumFractionDigits: 0 });
+      const statusPreview = Object.entries(result.by_status).filter(([, count]) => count > 0).map(([status, count]) => `${count} ${status}`).join(', ');
+      return `${result.count} orders (${money(result.total_value)} total, ${money(result.active_value)} active): ${statusPreview}.`;
+    }
     case 'documents.search':
       return `${result.documents.length} document templates and ${result.incomplete_packets} incomplete packets matched.`;
     case 'warehouse.query_readonly':

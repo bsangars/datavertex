@@ -48,6 +48,21 @@ export const tools = [
     inputSchema: { type: 'object', properties: { period: { type: 'string' } } }
   },
   {
+    name: 'sales.get_open_orders',
+    title: 'Get open orders on deals',
+    description: 'Return purchase orders linked to sales opportunities. Defaults to active statuses (Open, In Fulfillment, On Hold). Optional filters: opportunity_id, account_id, region, or a specific status. Set include_closed=true to include Shipped, Delivered, and Cancelled orders. Data is synthetic SQLite.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        opportunity_id: { type: 'integer' },
+        account_id: { type: 'integer' },
+        region: { type: 'string' },
+        status: { type: 'string', enum: ['Open', 'In Fulfillment', 'On Hold', 'Shipped', 'Delivered', 'Cancelled'] },
+        include_closed: { type: 'boolean' }
+      }
+    }
+  },
+  {
     name: 'documents.search',
     title: 'Search documents',
     description: 'Search approved document sources and return citations.',

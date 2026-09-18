@@ -3,13 +3,13 @@ export const defaultWorkspace = {
   workspace: { name: 'Default workspace', avatar: 'A' },
   user: { name: 'Workspace user', role: 'Operator', avatar: 'U' },
   hero: {
-    eyebrow: 'ORCHESTRATOR',
-    title: 'One question. The right tools.',
-    body: 'The agent plans work across your approved MCP servers, shows the evidence it used, and turns the answer into a shareable briefing.'
+    eyebrow: 'MCP AGENT WORKSPACE',
+    title: 'The agent handles the rest.',
+    body: ''
   },
   welcome: {
-    title: 'What would you like to know?',
-    body: 'Ask a question and the agent will pick the right read-only tools, run them, and synthesize a sourced answer.'
+    title: 'Pick a starting question — or write your own.',
+    body: 'The agent picks the right tools, runs them read-only, and shows every argument, result, and citation as it works.'
   },
   samplePrompts: [],
   policies: [],

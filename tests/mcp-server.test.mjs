@@ -46,7 +46,7 @@ test('the MCP server lists tools and returns SQLite-backed Workday data', async 
 
     child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} })}\n`);
     const list = await waitFor(messages, 2);
-    assert.equal(list.result.tools.length, 10);
+    assert.equal(list.result.tools.length, 11);
     assert.equal(list.result.tools.find(tool => tool.name === 'workday.search_workers').name, 'workday.search_workers');
 
     child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'workday.get_onboarding_status', arguments: {} } })}\n`);
